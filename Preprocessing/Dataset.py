@@ -24,7 +24,7 @@ marks_cols_to_join:
 '''
 
 class Dataset:
-	def __init__(self, master_file, marks_files, marks_cols_to_join = marks_cols_to_join):
+	def __init__(self, master_file, marks_files, keep_common_only, marks_cols_to_join = marks_cols_to_join):
 		kwargs = default_kwargs
 		if type(master_file) is tuple:
 			master_file, kwargs_customized = master_file
@@ -59,7 +59,7 @@ class Dataset:
 
 			marks_dfs.append(marks_df)
 
-		marks_df_combined = pandas.concat(marks_dfs, axis = "index")
+		marks_df_combined = pandas.concat(marks_dfs, axis = 0)
 		
 		if marks_cols_to_join is not None:
 			marks_df_combined = marks_df_combined[marks_cols_to_join]
@@ -67,8 +67,10 @@ class Dataset:
 		marks_df_combined.rename(columns = {colname: "Marks-" + colname for colname in marks_df.columns.values}, inplace = True)
 		
 		common_indices = master_df.index.intersection(marks_df_combined.index)
-		self.__df = pandas.concat([master_df.loc[common_indices], marks_df_combined.loc[common_indices]], axis = "columns")
+		join_method = "inner" if keep_common_only else "left"
 
+		self.__df = master_df.merge(marks_df_combined, how = join_method, left_index = True, right_index = True)
+	
 	@property 
 	def df(self):
 		return self.__df
@@ -79,14 +81,16 @@ if __name__ == "__main__":
 		[
 			("raw_data/201516T1 marks.csv", "UGFN"), 
 			("raw_data/201516T2 marks.csv", "UGFN")
-		]
+		],
+		False
 	)
 	dataset_2 = Dataset(
 		"raw_data/201617 Master Data.csv", 
 		[
 			("raw_data/201617T1 marks.csv", "UGFN"), 
 			("raw_data/201617T2 marks.csv", "UGFN")
-		]
+		],
+		False
 	)
 	dataset_1.df.to_csv("combined_1.csv")
 	dataset_2.df.to_csv("combined_2.csv")
