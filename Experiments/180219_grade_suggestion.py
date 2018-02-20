@@ -80,6 +80,7 @@ def run(args):
 	adj = -1*ADVICE_RATE*(summarized_data.loc[mask_testing_data, col_target] - predicted_grade)
 	summarized_data.loc[mask_testing_data, "Adj"] = adj
 	
+	print("r^2 = %.4f"%(predictor.score(summarized_data.loc[mask_training_data, cols_indvar].as_matrix(), summarized_data.loc[mask_training_data, col_target].as_matrix())))
 	print("Weights of", cols_indvar, ":")
 	print(predictor.coef_)
 	

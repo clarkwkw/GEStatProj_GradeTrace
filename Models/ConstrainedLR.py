@@ -52,5 +52,10 @@ class ConstrainedLR:
 		y = y + offset
 		return y
 
+	def score(self, X, y):
+		y_ = self.predict(X)
+		sse = np.sum(np.power(y - y_, 2))
+		sst = np.sum(np.power(y, 2))
+		return 1.0 - 1.0*sse/sst
 
 		
