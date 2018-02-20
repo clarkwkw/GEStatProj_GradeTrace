@@ -1,4 +1,5 @@
 import bisect
+import numpy as np
 
 default_grade_table = {
 	"A": 4.0,
@@ -11,7 +12,8 @@ default_grade_table = {
 	"C-": 1.7,
 	"D+": 1.3,
 	"D": 1.0,
-	"F": 0.0
+	"F": 0.0,
+	np.NAN: np.NAN
 }
 
 default_dec_grade = sorted(list(default_grade_table.items()), key = lambda x: x[1])

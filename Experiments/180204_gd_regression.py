@@ -52,9 +52,14 @@ def calculate_grouped_data(df):
 	for key in cols_teachers:
 		data[key] = df[key].mean()
 
+	if df["Enrollment Term"].iloc[0].endswith("T1"):
+		mask = df["Year of Study"] != 1
+	else:
+		mask = np.full(df.shape[0], True)
+
 	for key in cols_students:
-		data["%s-mean"%key] = df[key].mean()
-		data["%s-var"%key] = df[key].var()
+		data["%s-mean"%key] = df.loc[mask, key].mean()
+		data["%s-var"%key] = df.loc[mask, key].var()
 
 	return data
 
@@ -83,7 +88,7 @@ def plot(semester, teacher_id, processed, grade_mean_model, grade_var_model):
 	ax.set_title("Mean Grade Heatmap (%s-%s)"%(semester, teacher_id))
 	ax.set_xlabel("cGPA (Before) (mean)")
 	ax.set_ylabel("cGPA (Before) (var)")
-	collection = ax.pcolor(cgpa_before_mean_scale_2d, cgpa_before_var_scale_2d, prediction)
+	collection = ax.pcolor(cgpa_before_mean_scale_2d, cgpa_before_var_scale_2d, prediction, vmin = 2.8, vmax = 3.3)
 	fig.colorbar(collection, ax = ax, orientation = "horizontal")
 
 	filename = OUTPUT_DIR.rstrip("/") + "/" + "%s-%s-mean.png"%(semester, teacher_id)
@@ -103,7 +108,8 @@ def run(args):
 
 	cols_to_fill = [c for c in processed.columns if c not in cols_ids]
 	processed[cols_to_fill] = fill_missing(processed[cols_to_fill], "mean")
-
+	processed.to_csv(OUTPUT_DIR.rstrip("/") + "/processed.csv", index = False)
+	
 	grade_mean_model, grade_var_model = SVR(), SVR()
 	variable_cols = cols_teachers + ["cGPA (Before)-mean", "cGPA (Before)-var"]
 	grade_mean_model.fit(processed[variable_cols], processed["Grade-mean"])
@@ -118,5 +124,5 @@ def run(args):
 		images_mean.append(mean_image)
 		images_var.append(var_image)
 
-	generate_animated_gif(images_mean, OUTPUT_DIR.strip("/") + "/%s-mean.gif"%semester)
+	generate_animated_gif(images_mean, OUTPUT_DIR.strip("/") + "/%s-mean.gif"%semester, 0.4)
 	#generate_animated_gif(images_var, OUTPUT_DIR.strip("/") + "/%s-var.gif"%semester)
