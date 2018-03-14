@@ -70,6 +70,7 @@ def run(args):
 	summarized_data = full_df.groupby(by = cols_ids, group_keys = False).apply(summarize_input)
 	summarized_data = summarized_data.dropna(axis = 0, how = "any")
 	summarized_data["Adj"] = np.NAN
+	summarized_data["Predicted"] = np.NAN
 	
 	predictor = ConstrainedLR(sum_weight = 1)
 	mask_training_data = summarized_data["Enrollment Term"].isin(PREDICTOR_TRAINING_SET)
@@ -79,8 +80,10 @@ def run(args):
 	predicted_grade = predictor.predict(summarized_data.loc[mask_testing_data, cols_indvar].as_matrix())
 	adj = -1*ADVICE_RATE*(summarized_data.loc[mask_testing_data, col_target] - predicted_grade)
 	summarized_data.loc[mask_testing_data, "Adj"] = adj
+	summarized_data.loc[mask_testing_data, "Predicted"] = predicted_grade
 	
-	print("r^2 = %.4f"%(predictor.score(summarized_data.loc[mask_training_data, cols_indvar].as_matrix(), summarized_data.loc[mask_training_data, col_target].as_matrix())))
+	print("r^2 (train) = %.4f"%(predictor.score(summarized_data.loc[mask_training_data, cols_indvar].as_matrix(), summarized_data.loc[mask_training_data, col_target].as_matrix())))
+	print("r^2 (test) = %.4f"%(predictor.score(summarized_data.loc[mask_testing_data, cols_indvar].as_matrix(), summarized_data.loc[mask_testing_data, col_target].as_matrix())))
 	print("Weights of", cols_indvar, ":")
 	print(predictor.coef_)
 	
