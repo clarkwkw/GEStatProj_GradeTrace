@@ -11,6 +11,7 @@ try:
 	args, extra_args = parse_args()
 	module = importlib.import_module('Experiments.'+args.script)
 	module.run(extra_args)
-except ImportError:
+except ImportError as e:
+	raise e
 	print("> Cannot load script '%s', abort."%args.script)
 	exit(-1)

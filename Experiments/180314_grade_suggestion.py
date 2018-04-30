@@ -5,6 +5,7 @@ from Preprocessing.GradeTools import grade2dec
 from Tools.IO import make_sure_path_exists
 from functools import partial
 from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR
 
 PREDICTOR_TRAINING_SET = ["1516T1", "1516T2", "1617T1"]
 PREDICTOR_TESTING_SET = ["1617T2"]
@@ -16,8 +17,8 @@ a. student's tendency (cGPA before)
 b. student's performance (student's response on survey)
 c. teacher's tendency (difference between the mean of grade given by the teacher in this semester and previous semesters)
 d. teacher's performance (difference between the mean survey result of the class in this semester and the previous semesters)
-d. teacher's relative tendency (difference between the mean grade given by the teacher and other teachers in current semester)
-e. teacher's relative performance (difference between the mean survey result of the teacher and other teachers in current semester )
+e. teacher's relative tendency (difference between the mean grade given by the teacher and other teachers in current semester)
+f. teacher's relative performance (difference between the mean survey result of the teacher and other teachers in current semester )
 '''
 
 teacher_id_col = "Teacher Name"
@@ -104,14 +105,15 @@ def run(args):
 	complete_data_mask = ~(summarized_df[cols_indvar + [col_target]].isnull().any(axis = 1))
 	summarized_df = summarized_df.loc[yr1_students_mask & complete_data_mask]
 
-	model = LinearRegression(fit_intercept = False)
+	#model = LinearRegression(fit_intercept = False)
+	model = SVR(kernel = "linear")
 	mask_training_data = summarized_df["Enrollment Term"].isin(PREDICTOR_TRAINING_SET)
 	mask_testing_data = summarized_df["Enrollment Term"].isin(PREDICTOR_TESTING_SET)
 	model.fit(summarized_df.loc[mask_training_data, cols_indvar].as_matrix(), summarized_df.loc[mask_training_data, col_target].as_matrix())
 	summarized_df.loc[mask_testing_data, "Predicted"] = model.predict(summarized_df.loc[mask_testing_data, cols_indvar].as_matrix())
 	print("r^2 (train) = %.4f"%model.score(summarized_df.loc[mask_training_data, cols_indvar].as_matrix(), summarized_df.loc[mask_training_data, col_target].as_matrix()))
 	print("r^2 (test) = %.4f"%model.score(summarized_df.loc[mask_testing_data, cols_indvar].as_matrix(), summarized_df.loc[mask_testing_data, col_target].as_matrix()))
-	print(model.coef_)
+	#print(model.coef_)
 
 	make_sure_path_exists(OUTPUT_DIR)
 	summarized_df.to_csv(OUTPUT_DIR.rstrip("/") + "/" + "grade_suggestion.csv")
