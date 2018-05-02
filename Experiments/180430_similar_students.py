@@ -25,9 +25,23 @@ cols_entry = ["Q%d (Before)"%i for i in range(1, 18)] + ["cGPA (Before)"]
 cols_exit = ["Q%d (After)"%i for i in range(1, 18)] + effort_cols + ["cGPA (Before)"]
 extra_info = ["Grade"]
 
+
+pca_ndim_entry = None
+pca_ndim_exit = None
+sim_weight_entry = np.full(len(cols_entry), 1)
+sim_weight_entry[len(cols_entry) - 1] = 4
+sim_weight_exit = np.full(len(cols_exit), 1)
+sim_weight_exit[len(cols_exit) - 1] = 4
+top_k = 4
+
+
+'''
 pca_ndim_entry = 5
 pca_ndim_exit = 7
+sim_weight_entry = None
+sim_weight_exit = None
 top_k = 4
+'''
 
 datasets = [
 	Dataset(
@@ -92,7 +106,7 @@ def run(args):
 	test_index = random.choice(range(testing_df.shape[0]))
 
 	# Find similar students on entry data
-	regressor = KNNRegressor(n_neighbors = top_k, pca = pca_ndim_entry)
+	regressor = KNNRegressor(n_neighbors = top_k, pca = pca_ndim_entry, similarity_weight = sim_weight_entry)
 	regressor.fit(entry_training_matrix, get_grades(training_df))
 	sim, ind = regressor.kneighbors(entry_testing_matrix[test_index].reshape([1, -1]), n_neighbors = top_k)
 	entry_df = pandas.concat([testing_df.iloc[[test_index]], training_df.iloc[ind[0]]])
@@ -104,7 +118,7 @@ def run(args):
 	print("Entry R^2 (test) = %.3f"%regressor.score(entry_testing_matrix, get_grades(testing_df)))
 
 	# Find similar students on exit data
-	regressor = KNNRegressor(n_neighbors = top_k, pca = pca_ndim_exit)
+	regressor = KNNRegressor(n_neighbors = top_k, pca = pca_ndim_exit, similarity_weight = sim_weight_exit)
 	regressor.fit(exit_training_matrix, get_grades(training_df))
 	sim, ind = regressor.kneighbors(exit_testing_matrix[test_index].reshape([1, -1]), n_neighbors = top_k)
 	exit_df = pandas.concat([testing_df.iloc[[test_index]], training_df.iloc[ind[0]]])
